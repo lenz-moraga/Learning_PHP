@@ -1,0 +1,48 @@
+# This specifies the version of the Docker Compose file format being used. In this case, it's version 3.9.
+version: "3.9"
+
+# This section defines the services that make up the Docker application.
+services:
+  # php-env is the name of the first service.
+  php-env:
+    # build specifies that the image for this service should be built using the Dockerfile (Dockerfile) in the current context (.).
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # volumes mounts the local ./src directory to /var/www/html in the container, allowing you to edit code locally and see the changes reflected in the container.
+    volumes:
+      - ./src:/var/www/html
+    # ports maps port 9000 on the host to port 80 on the container.
+    ports:
+      - 9000:80
+    # depends_on ensures that the php-env service starts only after the mysql_db service is up.
+    depends_on:
+      - mysql_db
+
+  # mysql_db is the name of the second service.
+  mysql_db:
+    # image specifies that this service uses the latest version of the MySQL Docker image from Docker Hub.
+    image: mysql:latest
+    # command sets a specific command to be passed to the MySQL container. In this case, it's configuring the default authentication plugin.
+    command: --default-authentication-plugin=mysql_native_password
+    # restart: always ensures that the MySQL service restarts automatically if it goes down.
+    restart: always
+    # environment sets environment variables for the MySQL container, including the root password.
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+
+  # phpmyadmin is the name of the third service.
+  phpmyadmin:
+    # image specifies the latest version of the phpMyAdmin Docker image from Docker Hub.
+    image: phpmyadmin:latest
+    # restart: always ensures that the phpMyAdmin service restarts automatically if it goes down.
+    restart: always
+    # ports maps port 9001 on the host to port 80 on the container.
+    ports:
+      - 9001:80
+    # environment sets an environment variable (PMA_ARBITRARY) for phpMyAdmin. This variable is used to generate a blowfish secret for cookie encryption.
+    environment:
+      PMA_ARBITRARY: 1
+    # depends_on ensures that the phpmyadmin service starts only after the mysql_db service is up.
+    depends_on:
+      - mysql_db
